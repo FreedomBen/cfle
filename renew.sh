@@ -137,6 +137,3 @@ openssl x509 -noout -text -in fullchain.pem
 
 log "openssl check of the cert only:"
 openssl x509 -noout -text -in cert.pem
-
-log "Sleeping for a while for examination"
-sleep 60000

@@ -27,6 +27,7 @@ RUN dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.n
  && dnf config-manager --set-enabled powertools \
  && dnf update -y \
  && dnf install -y \
+    openssl \
     curl \
     jq \
     certbot \

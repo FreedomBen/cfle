@@ -28,7 +28,7 @@ spec:
             - name: <image-pull-secret>
           containers:
           - name: tls-cert-renewal
-            image: docker.io/freedomben/cfle:20210915125659
+            image: docker.io/freedomben/cfle:20210915131847
             imagePullPolicy: Always
             envFrom:
               - configMapRef:

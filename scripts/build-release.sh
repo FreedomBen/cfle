@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-LATEST_VERSION='20210915125659'
+LATEST_VERSION='20210915131847'
 
 docker build \
   -f Dockerfile \
