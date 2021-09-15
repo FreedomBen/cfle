@@ -1,0 +1,4 @@
+- Support test mode through env var
+- Notification to slack/email for renewals
+- Multiple namespaces in `NAMESPACE`
+- Store exp date in annotation on the secret so we can intelligently decide when to run it

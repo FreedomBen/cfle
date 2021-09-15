@@ -1,0 +1,54 @@
+---
+#apiVersion: batch/v1  # use this once on on k8s 1.21
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: tls-cert-renewal
+  namespace: tls-cert-renewal-ns
+  labels:
+    app: tls-cert-renewal
+spec:
+  schedule: "0 0 8 * *"  # Once a month at midnight on the 8th of each month
+  jobTemplate:
+    metadata:
+      namespace: tls-cert-renewal-ns
+      labels:
+        app: tls-cert-renewal
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 180
+      template:
+        metadata:
+          namespace: tls-cert-renewal-ns
+          labels:
+            app: tls-cert-renewal
+        spec:
+          serviceAccountName: tls-cert-renewal-sa
+          imagePullSecrets:
+            - name: <image-pull-secret>
+          containers:
+          - name: tls-cert-renewal
+            image: <iname-name>
+            imagePullPolicy: Always
+            envFrom:
+              - configMapRef:
+                  name: tls-cert-renewal-config
+              - secretRef:
+                  name: tls-cert-renewal-secrets
+          restartPolicy: Never
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tls-cert-renewal-config
+  namespace: tls-cert-renewal-ns
+  labels:
+    app: tls-cert-renewal
+data:
+  CLOUDFLARE_EMAIL: 'ben@example.com'
+  ROOT_DOMAIN: 'example.com'
+  WILDCARD_DOMAIN: '*.example.com'
+  SECRET_NAME_FULL_CHAIN: '<secret-name-full-chain>'
+  SECRET_NAME_CERT_ONLY: '<secret-name-cert-only>'
+  NAMESPACE: ''  # Namespace in which to put the secret.  Defaults to current namespace
