@@ -85,6 +85,10 @@ EOF
 chmod 0700 /root/.secrets/
 chmod 0400 /root/.secrets/cloudflare.ini
 
+if [ -n "$(test_cert)" ]; then
+  log "We are in test mode because env var TEST_CERT is set to '${TEST_CERT}'.  this certificate will come from the Let's Encrypt sandbox server, meaning it will not be valid from a user's perspective"
+fi
+
 log 'Beginning Lets Encrypt DNS-01 challenge'
 
 certbot certonly $(test_cert) \
@@ -128,6 +132,11 @@ kubectl create secret generic "${SECRET_NAME_CERT_ONLY}" $(namespace) \
 
 log "Certificate for ${ROOT_DOMAIN} and ${WILDCARD_DOMAIN} updated successfully."
 
+log "openssl check of the full chain cert:"
+openssl x509 -noout -text -in fullchain.pem
+
+log "openssl check of the cert only:"
+openssl x509 -noout -text -in cert.pem
 
 log "Sleeping for a while for examination"
 sleep 60000
