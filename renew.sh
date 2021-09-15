@@ -43,6 +43,15 @@ delete_secret_if_exists ()
   fi
 }
 
+test_cert ()
+{
+  if [[ $TEST_CERT =~ [Yy] ]]; then
+    echo "--test-cert"
+  else
+    echo ""
+  fi
+}
+
 if [ -z "$CLOUDFLARE_EMAIL" ]; then
   die 'CLOUDFLARE_EMAIL env var is empty.  Set appropriately and try again'
 elif [ -z "$CLOUDFLARE_API_TOKEN" ]; then
@@ -78,8 +87,7 @@ chmod 0400 /root/.secrets/cloudflare.ini
 
 log 'Beginning Lets Encrypt DNS-01 challenge'
 
-certbot certonly \
-  --test-cert \
+certbot certonly $(test_cert) \
   --non-interactive \
   --force-renewal \
   --agree-tos \
