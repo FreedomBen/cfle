@@ -33,6 +33,7 @@ RUN dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.n
     certbot \
     python3-certbot-dns-cloudflare \
     python-certbot-dns-cloudflare-doc \
+ && dnf module install -y ruby:2.7 \
  && dnf clean all \
  && rm -rf /var/cache/dnf /var/cache/yum
 

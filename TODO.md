@@ -1,6 +1,2 @@
 - Notification to slack/email for renewals
 - Multiple namespaces in `NAMESPACE`
-- Store exp date in annotation on the secret so we can intelligently decide when to run it
-  - If no cert exists run immediately
-  - If cert exists, check it's expiration date with openssl or with the annotation
-  - Renew cert if within 30 days of expiring

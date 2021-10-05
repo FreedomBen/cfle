@@ -48,8 +48,8 @@ metadata:
 data:
   TEST_CERT: 'yes' # will use let's encrypt sandbox for test cert. Change or remove for real cert (subject to rate limiting)
   CLOUDFLARE_EMAIL: 'ben@example.com'
-  ROOT_DOMAIN: 'example.com'
-  WILDCARD_DOMAIN: '*.example.com'
-  SECRET_NAME_FULL_CHAIN: '<secret-full-chain>'
-  SECRET_NAME_CERT_ONLY: '<secret-cert-only>'
+  DOMAINS: 'example.com,*.example.com'  # comma separated
+  TLS_CERT_SECRET_NAME: '<secret-full-chain>'  # leave blank to omit
+  NUM_DAYS_BEFORE_TO_RENEW: '30'
   NAMESPACE: ''  # Namespace in which to put the secret.  Defaults to current namespace
+  #NAMESPACE: 'namespace-one,namespace-two'  # Namespace in which to put the secret.  Defaults to current namespace
