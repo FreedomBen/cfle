@@ -126,6 +126,7 @@ elif [ -z "$TLS_CERT_SECRET_NAME" ]; then
   die 'TLS_CERT_SECRET_NAME and env vars are empty.  Set appropriately and try again'
 fi
 
+log "TLS certs will go in secret '${TLS_CERT_SECRET_NAME}' in namespace '$(namespace)'"
 
 # Basic algo:
 #  - check if target secret already exists
