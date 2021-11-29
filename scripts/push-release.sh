@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 
-LATEST_VERSION='20211004184552'
+if [ -z "${RELEASE_VERSION}" ]; then
+  RELEASE_VERSION="$(git rev-parse HEAD)"
+fi
 
-docker push "docker.io/freedomben/cfle:${LATEST_VERSION}"
 docker push "docker.io/freedomben/cfle:latest"
+docker push "docker.io/freedomben/cfle:${RELEASE_VERSION}"
+
