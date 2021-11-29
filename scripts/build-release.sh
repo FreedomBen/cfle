@@ -8,7 +8,7 @@ else
 fi
 
 docker build \
-  --file Dockerfile.prod \
+  --file Dockerfile \
   --tag "docker.io/freedomben/cfle:${RELEASE_VERSION}" \
   --tag "docker.io/freedomben/cfle:latest" \
   .
