@@ -4,7 +4,8 @@
 #CLOUDFLARE_EMAIL='ben@example.com'
 #CLOUDFLARE_API_TOKEN='awekjltaSAGKLHG'
 #DOMAINS='example.com,*.example.com'
-#WILDCARD_DOMAIN='*.example.com'
+# TLS_CERT_SECRET_NAME
+
 
 NUM_SECS_IN_MONTH=2592000  # month == 30 days, 60 * 60 * 24 * 30
 
