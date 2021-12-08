@@ -11,7 +11,8 @@
 #SLACK_CHANNEL_DEBUG='#debug'  # If set, debug mode will be enabled
 #SLACK_CHANNEL_INFO='#info'
 #SLACK_CHANNEL_WARNING='#warning'
-#SLACK_CHANNEL_ERROR='#error'
+#SLACK_CHANNEL_ERROR='#main'
+#SLACK_CHANNEL_SUCCESS='#main'
 #SLACK_USERNAME='Some Username'
 #SLACK_ICON_EMOJI=':scroll:'  # or :lock: or something
 
@@ -53,7 +54,7 @@ slack_username ()
   if [ -n "${SLACK_USERNAME}" ]; then
     echo "${SLACK_USERNAME}"
   else
-    echo "CFLE - Let's Encrypt Certificate Renewer"
+    echo "CFLE - Lets Encrypt Certificate Renewer"
   fi
 }
 
@@ -65,6 +66,15 @@ send_slack_message ()
       --data "token=${SLACK_TOKEN}&channel=#${1}&text=${2}&username=$(slack_username)&icon_emoji=$(slack_icon_emoji)" \
       'https://slack.com/api/chat.postMessage'
     echo # add a new-line to the output so it's easier to read the logs
+  fi
+}
+
+slack_success ()
+{
+  if [ -n "${SLACK_TOKEN}" ]; then
+    send_slack_message "${SLACK_CHANNEL_SUCCESS}" ":white_check_mark:  ${1}"
+  else
+    log "SLACK_TOKEN is not present.  Success message not sent to slack: '${1}'"
   fi
 }
 
@@ -302,7 +312,7 @@ if [ "$?" != "0" ]; then
 fi
 
 log "Certificate for ${DOMAINS} updated successfully."
-slack_info "Renewal of TLS certs for ${DOMANS} succeeded."
+slack_success "Renewal of TLS certs for ${DOMAINS} succeeded."
 
 log "openssl check of the full chain cert:"
 openssl x509 -noout -text -in fullchain.pem

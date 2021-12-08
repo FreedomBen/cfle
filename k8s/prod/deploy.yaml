@@ -56,6 +56,7 @@ data:
   SLACK_CHANNEL_INFO: '#infra-info'
   SLACK_CHANNEL_WARNING: '#infra-warn'
   SLACK_CHANNEL_ERROR: '#infra-error'
-  SLACK_USERNAME: "CFLE - Let's Encrypt Certificate Renewer"
+  SLACK_CHANNEL_SUCCESS: '#infra-error'
+  SLACK_USERNAME: "CFLE - Lets Encrypt Certificate Renewer"
   SLACK_ICON_EMOJI: ':scroll:'
 
