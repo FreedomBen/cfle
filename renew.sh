@@ -96,7 +96,7 @@ slack_debug ()
 
 slack_info ()
 {
-  send_slack_message "${SLACK_CHANNEL_INFO}" ":warning:  ${1}"
+  send_slack_message "${SLACK_CHANNEL_INFO}" ":information_source:  ${1}"
 }
 
 namespace ()
@@ -209,8 +209,8 @@ if [[ "$FORCE_RENEWAL" =~ [Yy] ]]; then
 else
   log 'Checking for existing certificate'
   if ! replace_cert; then
-    log "Certificate already exists and is not within ${NUM_DAYS_BEFORE_TO_RENEW} days of expiring.  Doing nothing"
-    slack_info "Certificate already exists and is not within ${NUM_DAYS_BEFORE_TO_RENEW} days of expiring.  Doing nothing"
+    log "Certificate already exists in secret '${TLS_CERT_SECRET_NAME}' and is not within ${NUM_DAYS_BEFORE_TO_RENEW} days of expiring.  Doing nothing"
+    slack_info "Certificate already exists in secret '${TLS_CERT_SECRET_NAME}' and is not within ${NUM_DAYS_BEFORE_TO_RENEW} days of expiring.  Doing nothing"
     exit 0
   fi
 fi
@@ -250,12 +250,12 @@ certbot certonly $(test_cert) \
 
 if [ "$?" != "0" ]; then
   log 'certbot failed to renew certificates'
-  slack_error "Renewal of TLS certs for ${DOMAINS} failed.  certbot run exited without success.\n\nPod name: $(cat /etc/podinfo/podname)\nPod namespace: $(cat /etc/podinfo/namespace)"
+  slack_error "Renewal of TLS certs for ${DOMAINS} failed.  certbot run exited with failure.\n\nPod name: $(cat /etc/podinfo/podname)\nPod namespace: $(cat /etc/podinfo/namespace)"
   exit 2
 fi
 
 log 'Lets Encrypt DNS-01 challenge finished.  Readying for upload to k8s'
-slack_debug 'Lets Encrypt DNS-01 challenge finished.  Readying for upload to k8s'
+slack_debug "Lets Encrypt DNS-01 challenge finished.  Readying for upload to k8s in secret '${TLS_CERT_SECRET_NAME}'"
 
 set -e 
 
@@ -272,12 +272,12 @@ delete_secret_if_exists "${TLS_CERT_SECRET_NAME}"
 
 if [ "$?" != "0" ]; then
   log 'Error deleting existing secret'
-  slack_error "Renewal of TLS certs for ${DOMAINS} failed.  Could not delete existing Secret (that contains the old certificate)\n\nPod name: $(cat /etc/podinfo/podname)\nPod namespace: $(cat /etc/podinfo/namespace)"
+  slack_error "Renewal of TLS certs for ${DOMAINS} failed.  Could not delete existing Secret '${TLS_CERT_SECRET_NAME}' (that contains the old certificate)\n\nPod name: $(cat /etc/podinfo/podname)\nPod namespace: $(cat /etc/podinfo/namespace)"
   exit 2
 fi
 
-log "Uploading full chain cert as secret '${TLS_CERT_SECRET_NAME}' K8s"
-slack_debug "Uploading full chain cert as secret '${TLS_CERT_SECRET_NAME}' K8s"
+log "Uploading full chain cert as secret '${TLS_CERT_SECRET_NAME}' to K8s"
+slack_debug "Uploading full chain cert as secret '${TLS_CERT_SECRET_NAME}' to K8s"
 kubectl create secret generic "${TLS_CERT_SECRET_NAME}" $(namespace) \
   --from-literal="tls.key=$(cat privkey.pem)" \
   --from-literal="tls.crt=$(cat cert.pem)" \
@@ -292,12 +292,12 @@ kubectl create secret generic "${TLS_CERT_SECRET_NAME}" $(namespace) \
 
 if [ "$?" != "0" ]; then
   log "Error creating new secret ${TLS_CERT_SECRET_NAME}"
-  slack_error "Renewal of TLS certs for ${DOMAINS} failed.  Error uploading certs to k8s secret\n\nPod name: $(cat /etc/podinfo/podname)\nPod namespace: $(cat /etc/podinfo/namespace)"
+  slack_error "Renewal of TLS certs for ${DOMAINS} failed.  Error uploading certs to k8s secret '${TLS_CERT_SECRET_NAME}'\n\nPod name: $(cat /etc/podinfo/podname)\nPod namespace: $(cat /etc/podinfo/namespace)"
   exit 2
 fi
 
-log "Certificate for ${DOMAINS} updated successfully."
-slack_success "Renewal of TLS certs for ${DOMAINS} succeeded."
+log "Certificate for ${DOMAINS} updated successfully.  Cert placed in secret '${TLS_CERT_SECRET_NAME}'"
+slack_success "Renewal of TLS certs for ${DOMAINS} succeeded.  Cert placed in secret '${TLS_CERT_SECRET_NAME}'"
 
 log "openssl check of the full chain cert:"
 openssl x509 -noout -text -in fullchain.pem
