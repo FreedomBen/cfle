@@ -61,11 +61,14 @@ slack_username ()
 send_slack_message ()
 {
   local username="Deploy of ${GITHUB_REPOSITORY} to ${ENV}"
-  if [ -n "${SLACK_API_TOKEN}" ] && [ -n "${SLACK_CHANNEL}" ]; then
+  if [ -n "${SLACK_API_TOKEN}" ]; then
+    log "SLACK_API_TOKEN is set.  sending slack message to channel ${1}"
     curl \
       --data "token=${SLACK_API_TOKEN}&channel=#${1}&text=${2}&username=$(slack_username)&icon_emoji=$(slack_icon_emoji)" \
       'https://slack.com/api/chat.postMessage'
     echo # add a new-line to the output so it's easier to read the logs
+  else
+    log "SLACK_API_TOKEN is not present.  Message not sent to slack channel '${1}' message: '${2}'"
   fi
 }
 
