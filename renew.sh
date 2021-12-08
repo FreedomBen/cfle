@@ -170,7 +170,7 @@ replace_cert ()
       return 0
     else
       log "Certificate is not within ${NUM_DAYS_BEFORE_TO_RENEW} days of expiring.  Not proceeding with renewal"
-      slack_info "Certificate is not within ${NUM_DAYS_BEFORE_TO_RENEW} days of expiring.  Not proceeding with renewal"
+      slack_debug "Certificate is not within ${NUM_DAYS_BEFORE_TO_RENEW} days of expiring.  Not proceeding with renewal"
       return 1
     fi
   else
