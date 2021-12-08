@@ -64,6 +64,8 @@ send_slack_message ()
   if [ -n "${SLACK_API_TOKEN}" ]; then
     log "SLACK_API_TOKEN is set.  sending slack message to channel ${1}"
     curl \
+      --silent \
+      --show-error \
       --data "token=${SLACK_API_TOKEN}&channel=#${1}&text=${2}&username=$(slack_username)&icon_emoji=$(slack_icon_emoji)" \
       'https://slack.com/api/chat.postMessage'
     echo # add a new-line to the output so it's easier to read the logs
