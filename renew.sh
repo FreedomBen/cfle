@@ -7,7 +7,7 @@
 # TLS_CERT_SECRET_NAME
 
 # Slack integration
-#SLACK_TOKEN='xoxp-...'
+#SLACK_API_TOKEN='xoxp-...'
 #SLACK_CHANNEL_DEBUG='#debug'  # If set, debug mode will be enabled
 #SLACK_CHANNEL_INFO='#info'
 #SLACK_CHANNEL_WARNING='#warning'
@@ -61,9 +61,9 @@ slack_username ()
 send_slack_message ()
 {
   local username="Deploy of ${GITHUB_REPOSITORY} to ${ENV}"
-  if [ -n "${SLACK_TOKEN}" ] && [ -n "${SLACK_CHANNEL}" ]; then
+  if [ -n "${SLACK_API_TOKEN}" ] && [ -n "${SLACK_CHANNEL}" ]; then
     curl \
-      --data "token=${SLACK_TOKEN}&channel=#${1}&text=${2}&username=$(slack_username)&icon_emoji=$(slack_icon_emoji)" \
+      --data "token=${SLACK_API_TOKEN}&channel=#${1}&text=${2}&username=$(slack_username)&icon_emoji=$(slack_icon_emoji)" \
       'https://slack.com/api/chat.postMessage'
     echo # add a new-line to the output so it's easier to read the logs
   fi
@@ -71,46 +71,46 @@ send_slack_message ()
 
 slack_success ()
 {
-  if [ -n "${SLACK_TOKEN}" ]; then
+  if [ -n "${SLACK_API_TOKEN}" ]; then
     send_slack_message "${SLACK_CHANNEL_SUCCESS}" ":white_check_mark:  ${1}"
   else
-    log "SLACK_TOKEN is not present.  Success message not sent to slack: '${1}'"
+    log "SLACK_API_TOKEN is not present.  Success message not sent to slack: '${1}'"
   fi
 }
 
 slack_error ()
 {
-  if [ -n "${SLACK_TOKEN}" ]; then
+  if [ -n "${SLACK_API_TOKEN}" ]; then
     send_slack_message "${SLACK_CHANNEL_ERROR}" ":x:  ${1}"
   else
-    log "SLACK_TOKEN is not present.  Error message not sent to slack: '${1}'"
+    log "SLACK_API_TOKEN is not present.  Error message not sent to slack: '${1}'"
   fi
 }
 
 slack_warning ()
 {
-  if [ -n "${SLACK_TOKEN}" ]; then
+  if [ -n "${SLACK_API_TOKEN}" ]; then
     send_slack_message "${SLACK_CHANNEL_WARNING}" ":warning:  ${1}"
   else
-    log "SLACK_TOKEN is not present.  Warning message not sent to slack: '${1}'"
+    log "SLACK_API_TOKEN is not present.  Warning message not sent to slack: '${1}'"
   fi
 }
 
 slack_debug ()
 {
-  if [ -n "${SLACK_TOKEN}" ]; then
+  if [ -n "${SLACK_API_TOKEN}" ]; then
     send_slack_message "${SLACK_CHANNEL_DEBUG}" ":information_source:  ${1}"
   else
-    log "SLACK_TOKEN is not present.  Debug message not sent to slack: '${1}'"
+    log "SLACK_API_TOKEN is not present.  Debug message not sent to slack: '${1}'"
   fi
 }
 
 slack_info ()
 {
-  if [ -n "${SLACK_TOKEN}" ]; then
+  if [ -n "${SLACK_API_TOKEN}" ]; then
     send_slack_message "${SLACK_CHANNEL_INFO}" ":warning:  ${1}"
   else
-    log "SLACK_TOKEN is not present.  Info message not sent to slack: '${1}'"
+    log "SLACK_API_TOKEN is not present.  Info message not sent to slack: '${1}'"
   fi
 }
 
