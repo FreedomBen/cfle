@@ -6,6 +6,15 @@
 #DOMAINS='example.com,*.example.com'
 # TLS_CERT_SECRET_NAME
 
+# Slack integration
+#SLACK_TOKEN='xoxp-...'
+#SLACK_CHANNEL_DEBUG='#debug'  # If set, debug mode will be enabled
+#SLACK_CHANNEL_INFO='#info'
+#SLACK_CHANNEL_WARNING='#warning'
+#SLACK_CHANNEL_ERROR='#error'
+#SLACK_USERNAME='Some Username'
+#SLACK_ICON_EMOJI=':scroll:'  # or :lock: or something
+
 
 NUM_SECS_IN_MONTH=2592000  # month == 30 days, 60 * 60 * 24 * 30
 
@@ -21,6 +30,7 @@ num_secs_until_expire ()
 die ()
 {
   echo "[DIE] - $(date): ${1}"
+  slack_error "${1}"
   exit 1
 }
 
@@ -29,14 +39,69 @@ log ()
   echo "[LOG] - $(date): ${1}"
 }
 
+slack_icon_emoji ()
+{
+  if [ -n "${SLACK_ICON_EMOJI}" ]; then
+    echo "${SLACK_ICON_EMOJI}"
+  else
+    echo ":scroll:"
+  fi
+}
+
+slack_username ()
+{
+  if [ -n "${SLACK_USERNAME}" ]; then
+    echo "${SLACK_USERNAME}"
+  else
+    echo "CFLE - Let's Encrypt Certificate Renewer"
+  fi
+}
+
+send_slack_message ()
+{
+  local username="Deploy of ${GITHUB_REPOSITORY} to ${ENV}"
+  if [ -n "${SLACK_TOKEN}" ] && [ -n "${SLACK_CHANNEL}" ]; then
+    curl \
+      --data "token=${SLACK_TOKEN}&channel=#${1}&text=${2}&username=$(slack_username)&icon_emoji=$(slack_icon_emoji)" \
+      'https://slack.com/api/chat.postMessage'
+    echo # add a new-line to the output so it's easier to read the logs
+  fi
+}
+
+slack_error ()
+{
+  if [ -n "${SLACK_TOKEN}" ]; then
+    send_slack_message "${SLACK_CHANNEL_ERROR}" ":x:  ${1}"
+  else
+    log "SLACK_TOKEN is not present.  Error message not sent to slack: '${1}'"
+  fi
+}
+
 slack_warning ()
 {
-  echo "SLACK WARNING: ${1}"
+  if [ -n "${SLACK_TOKEN}" ]; then
+    send_slack_message "${SLACK_CHANNEL_WARNING}" ":warning:  ${1}"
+  else
+    log "SLACK_TOKEN is not present.  Warning message not sent to slack: '${1}'"
+  fi
+}
+
+slack_debug ()
+{
+  if [ -n "${SLACK_TOKEN}" ]; then
+    send_slack_message "${SLACK_CHANNEL_DEBUG}" ":information_source:  ${1}"
+  else
+    log "SLACK_TOKEN is not present.  Debug message not sent to slack: '${1}'"
+  fi
 }
 
 slack_info ()
 {
-  echo "SLACK INFO: ${1}"
+  if [ -n "${SLACK_TOKEN}" ]; then
+    send_slack_message "${SLACK_CHANNEL_INFO}" ":warning:  ${1}"
+  else
+    log "SLACK_TOKEN is not present.  Info message not sent to slack: '${1}'"
+  fi
 }
 
 namespace ()
@@ -59,6 +124,7 @@ delete_secret_if_exists ()
 {
   if secret_exists "${1}"; then
     log "Secret ${1} exists.  Deleting..."
+    slack_debug "Secret ${1} exists.  Deleting..."
     kubectl delete secret "${1}" $(namespace)
   else
     log "Secret ${1} does not yet exist so no need to delete"
@@ -103,16 +169,20 @@ replace_cert ()
 {
   # We want to replace the cert if it doesn't exist, or if it expires within 30 days
   if does_cert_exist; then
-    log "Secret exists.  Checking if it is within ${NUM_DAYS_BEFORE_TO_RENEW} days of expiring"
+    log "Secret '${TLS_CERT_SECRET_NAME}' exists.  Checking if it is within ${NUM_DAYS_BEFORE_TO_RENEW} days of expiring"
+    slack_debug "Secret '${TLS_CERT_SECRET_NAME}' already contains a certificate.  Checking if expiration is within ${NUM_DAYS_BEFORE_TO_RENEW} of expiring"
     if will_cert_expire; then
       log "Certificate is within ${NUM_DAYS_BEFORE_TO_RENEW} days of expiring.  Proceeding with renewal"
+      slack_debug "Certificate is within ${NUM_DAYS_BEFORE_TO_RENEW} days of expiring.  Proceeding with renewal"
       return 0
     else
       log "Certificate is not within ${NUM_DAYS_BEFORE_TO_RENEW} days of expiring.  Not proceeding with renewal"
+      slack_info "Certificate is not within ${NUM_DAYS_BEFORE_TO_RENEW} days of expiring.  Not proceeding with renewal"
       return 1
     fi
   else
-    log 'Secret does not exist. Proceeding with renewal'
+    log 'Secret '${TLS_CERT_SECRET_NAME}' does not exist. Proceeding with renewal'
+    slack_debug 'Secret '${TLS_CERT_SECRET_NAME}' does not exist. Proceeding with renewal'
     return 0
   fi
 }
@@ -140,10 +210,12 @@ log "TLS certs will go in secret '${TLS_CERT_SECRET_NAME}' in namespace '$(names
 
 if [[ "$FORCE_RENEWAL" =~ [Yy] ]]; then
   log "FORCE_RENEWAL is set to ${FORCE_RENEWAL}.  Renewing"
+  slack_debug "FORCE_RENEWAL is set to ${FORCE_RENEWAL}.  Renewing"
 else
   log 'Checking for existing certificate'
   if ! replace_cert; then
-    log 'Certificate already exists and is not close to expiring.  Doing nothing'
+    log "Certificate already exists and is not within ${NUM_DAYS_BEFORE_TO_RENEW} days of expiring.  Doing nothing"
+    slack_info "Certificate already exists and is not within ${NUM_DAYS_BEFORE_TO_RENEW} days of expiring.  Doing nothing"
     exit 0
   fi
 fi
@@ -163,6 +235,7 @@ chmod 0400 /root/.secrets/cloudflare.ini
 
 if [ -n "$(test_cert)" ]; then
   log "We are in test mode because env var TEST_CERT is set to '${TEST_CERT}'.  this certificate will come from the Let's Encrypt sandbox server, meaning it will not be valid from a user's perspective"
+  slack_debug "In test cert mode so the certificate will come from the LE sandbox and will not be valid"
 fi
 
 log 'Beginning Lets Encrypt DNS-01 challenge'
@@ -182,11 +255,12 @@ certbot certonly $(test_cert) \
 
 if [ "$?" != "0" ]; then
   log 'certbot failed to renew certificates'
-  slack_warning "Renewal of TLS certs for ${DOMAINS} failed.\n\nPod name: $(cat /etc/podinfo/podname)\nPod namespace: $(cat /etc/podinfo/namespace)"
+  slack_error "Renewal of TLS certs for ${DOMAINS} failed.  certbot run exited without success.\n\nPod name: $(cat /etc/podinfo/podname)\nPod namespace: $(cat /etc/podinfo/namespace)"
   exit 2
 fi
 
 log 'Lets Encrypt DNS-01 challenge finished.  Readying for upload to k8s'
+slack_debug 'Lets Encrypt DNS-01 challenge finished.  Readying for upload to k8s'
 
 set -e 
 
@@ -203,11 +277,12 @@ delete_secret_if_exists "${TLS_CERT_SECRET_NAME}"
 
 if [ "$?" != "0" ]; then
   log 'Error deleting existing secret'
-  slack_warning "Renewal of TLS certs for ${DOMAINS} failed.\n\nPod name: $(cat /etc/podinfo/podname)\nPod namespace: $(cat /etc/podinfo/namespace)"
+  slack_error "Renewal of TLS certs for ${DOMAINS} failed.  Could not delete existing Secret (that contains the old certificate)\n\nPod name: $(cat /etc/podinfo/podname)\nPod namespace: $(cat /etc/podinfo/namespace)"
   exit 2
 fi
 
 log "Uploading full chain cert as secret '${TLS_CERT_SECRET_NAME}' K8s"
+slack_debug "Uploading full chain cert as secret '${TLS_CERT_SECRET_NAME}' K8s"
 kubectl create secret generic "${TLS_CERT_SECRET_NAME}" $(namespace) \
   --from-literal="tls.key=$(cat privkey.pem)" \
   --from-literal="tls.crt=$(cat cert.pem)" \
@@ -222,7 +297,7 @@ kubectl create secret generic "${TLS_CERT_SECRET_NAME}" $(namespace) \
 
 if [ "$?" != "0" ]; then
   log "Error creating new secret ${TLS_CERT_SECRET_NAME}"
-  slack_warning "Renewal of TLS certs for ${DOMAINS} failed.\n\nPod name: $(cat /etc/podinfo/podname)\nPod namespace: $(cat /etc/podinfo/namespace)"
+  slack_error "Renewal of TLS certs for ${DOMAINS} failed.  Error uploading certs to k8s secret\n\nPod name: $(cat /etc/podinfo/podname)\nPod namespace: $(cat /etc/podinfo/namespace)"
   exit 2
 fi
 
