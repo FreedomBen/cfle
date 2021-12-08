@@ -74,47 +74,27 @@ send_slack_message ()
 
 slack_success ()
 {
-  if [ -n "${SLACK_API_TOKEN}" ]; then
-    send_slack_message "${SLACK_CHANNEL_SUCCESS}" ":white_check_mark:  ${1}"
-  else
-    log "SLACK_API_TOKEN is not present.  Success message not sent to slack: '${1}'"
-  fi
+  send_slack_message "${SLACK_CHANNEL_SUCCESS}" ":white_check_mark:  ${1}"
 }
 
 slack_error ()
 {
-  if [ -n "${SLACK_API_TOKEN}" ]; then
-    send_slack_message "${SLACK_CHANNEL_ERROR}" ":x:  ${1}"
-  else
-    log "SLACK_API_TOKEN is not present.  Error message not sent to slack: '${1}'"
-  fi
+  send_slack_message "${SLACK_CHANNEL_ERROR}" ":x:  ${1}"
 }
 
 slack_warning ()
 {
-  if [ -n "${SLACK_API_TOKEN}" ]; then
-    send_slack_message "${SLACK_CHANNEL_WARNING}" ":warning:  ${1}"
-  else
-    log "SLACK_API_TOKEN is not present.  Warning message not sent to slack: '${1}'"
-  fi
+  send_slack_message "${SLACK_CHANNEL_WARNING}" ":warning:  ${1}"
 }
 
 slack_debug ()
 {
-  if [ -n "${SLACK_API_TOKEN}" ]; then
-    send_slack_message "${SLACK_CHANNEL_DEBUG}" ":information_source:  ${1}"
-  else
-    log "SLACK_API_TOKEN is not present.  Debug message not sent to slack: '${1}'"
-  fi
+  send_slack_message "${SLACK_CHANNEL_DEBUG}" ":information_source:  ${1}"
 }
 
 slack_info ()
 {
-  if [ -n "${SLACK_API_TOKEN}" ]; then
-    send_slack_message "${SLACK_CHANNEL_INFO}" ":warning:  ${1}"
-  else
-    log "SLACK_API_TOKEN is not present.  Info message not sent to slack: '${1}'"
-  fi
+  send_slack_message "${SLACK_CHANNEL_INFO}" ":warning:  ${1}"
 }
 
 namespace ()
