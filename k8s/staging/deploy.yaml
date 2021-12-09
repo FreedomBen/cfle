@@ -8,7 +8,7 @@ metadata:
   labels:
     app: cfle
 spec:
-  schedule: "0 0 8 * *"  # Once a month at midnight on the 8th of each month
+  schedule: "30 15 * * *"  # Everyday at 3:30 PM
   jobTemplate:
     metadata:
       namespace: cfle-staging

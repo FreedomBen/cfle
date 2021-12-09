@@ -8,7 +8,7 @@ metadata:
   labels:
     app: cfle
 spec:
-  schedule: "0 0 8 * *"  # Once a month at midnight on the 8th of each month
+  schedule: "30 16 * * *"  # Everyday at 4:30 PM
   jobTemplate:
     metadata:
       namespace: cfle-prod
@@ -58,5 +58,5 @@ data:
   SLACK_CHANNEL_ERROR: '#infra-error'
   SLACK_CHANNEL_SUCCESS: '#infra-error'
   SLACK_USERNAME: "CFLE - Lets Encrypt Certificate Renewer"
-  SLACK_ICON_EMOJI: ':scroll:'
+  SLACK_ICON_EMOJI: ':lock:'
 
