@@ -16,8 +16,12 @@
 #SLACK_USERNAME='Some Username'
 #SLACK_ICON_EMOJI=':scroll:'  # or :lock: or something
 
+set -o nounset  # Uncomment for debugging
 
-NUM_SECS_IN_MONTH=2592000  # month == 30 days, 60 * 60 * 24 * 30
+# Use `help declare` to get more info about declare options
+declare -r NUM_SECS_IN_MONTH=2592000  # month == 30 days, 60 * 60 * 24 * 30
+
+TLS_CERT=''  # Make TLS_CERT a global
 
 num_secs_until_expire ()
 {
@@ -30,9 +34,10 @@ num_secs_until_expire ()
 
 die ()
 {
-  echo "[DIE] - $(date): ${1}"
-  slack_error "${1}"
-  exit 1
+  exit_code="${1:-1}"
+  echo "[DIE] Exit code '${exit_code}' - $(date): ${2}"
+  slack_error "${2}"
+  exit ${exit_code}
 }
 
 log ()
@@ -99,6 +104,11 @@ slack_info ()
   send_slack_message "${SLACK_CHANNEL_INFO}" ":information_source:  ${1}"
 }
 
+renewal_failure_message ()
+{
+  echo -e "Renewal of TLS cert for ${DOMAINS} failed\nCert expires on **$(cert_expire_date)**\n${1}\nCheck logs with kubectl logs $(cat /etc/podinfo/podname) -n $(cat /etc/podinfo/namespace)"
+}
+
 namespace ()
 {
   # If the user set the K8S_NAMESPACE var then use that.
@@ -145,15 +155,33 @@ has_more_time ()
 {
   echo "${1}" \
     | base64 -d \
-    | openssl x509 -checkend "${NUM_SECS_IN_MONTH}" -noout
+    | openssl x509 -checkend "$(num_secs_until_expire)" -noout
+}
+
+tls_cert ()
+{
+  if [ -n "${TLS_CERT}" ]; then
+    echo "${TLS_CERT}"
+  else
+    # Retrieve cert from k8s secret
+    TLS_CERT="$(kubectl get secret "${TLS_CERT_SECRET_NAME}" $(namespace) -o jsonpath={.data.TLS_CERT})"
+    echo "${TLS_CERT}"
+  fi
+}
+
+cert_expire_date ()
+{
+  echo "${1}" \
+    | base64 -d \
+    | openssl x509 -enddate -noout \
+    | sed -E -e 's/^notAfter=//g'
 }
 
 will_cert_expire ()
 {
   log "Checking if the cert in the secret is going to expire"
-  tls_cert="$(kubectl get secret "${TLS_CERT_SECRET_NAME}" $(namespace) -o jsonpath={.data.TLS_CERT})"
 
-  if [ -n "${tls_cert}" ] && has_more_time "${tls_cert}"; then
+  if [ -n "$(tls_cert)" ] && has_more_time "$(tls_cert)"; then
     return 1
   else
     return 0
@@ -183,13 +211,13 @@ replace_cert ()
 }
 
 if [ -z "$CLOUDFLARE_EMAIL" ]; then
-  die 'CLOUDFLARE_EMAIL env var is empty.  Set appropriately and try again'
+  die 'CFLE cannot renew Lets Encypt certificate becuase the CLOUDFLARE_EMAIL env var is empty.  Set appropriately and try again'
 elif [ -z "$CLOUDFLARE_API_TOKEN" ]; then
-  die 'CLOUDFLARE_API_TOKEN env var is empty.  Set appropriately and try again'
+  die 'CFLE cannot renew Lets Encypt certificate becuase the CLOUDFLARE_API_TOKEN env var is empty.  Set appropriately and try again'
 elif [ -z "$DOMAINS" ]; then
-  die 'DOMAINS env var is empty.  Set appropriately and try again'
+  die 'CFLE cannot renew Lets Encypt certificate becuase the DOMAINS env var is empty.  Set appropriately and try again'
 elif [ -z "$TLS_CERT_SECRET_NAME" ]; then
-  die 'TLS_CERT_SECRET_NAME and env vars are empty.  Set appropriately and try again'
+  die 'CFLE cannot renew Lets Encypt certificate becuase the TLS_CERT_SECRET_NAME and env vars are empty.  Set appropriately and try again'
 fi
 
 log "TLS certs will go in secret '${TLS_CERT_SECRET_NAME}' in namespace '$(namespace)'"
@@ -250,8 +278,7 @@ certbot certonly $(test_cert) \
 
 if [ "$?" != "0" ]; then
   log 'certbot failed to renew certificates'
-  slack_error "Renewal of TLS certs for ${DOMAINS} failed.  certbot run exited with failure.\n\nPod name: $(cat /etc/podinfo/podname)\nPod namespace: $(cat /etc/podinfo/namespace)"
-  exit 2
+  die "$(renewal_failure_message "certbot exited with failure")"
 fi
 
 log 'Lets Encrypt DNS-01 challenge finished.  Readying for upload to k8s'
@@ -272,8 +299,7 @@ delete_secret_if_exists "${TLS_CERT_SECRET_NAME}"
 
 if [ "$?" != "0" ]; then
   log 'Error deleting existing secret'
-  slack_error "Renewal of TLS certs for ${DOMAINS} failed.  Could not delete existing Secret '${TLS_CERT_SECRET_NAME}' (that contains the old certificate)\n\nPod name: $(cat /etc/podinfo/podname)\nPod namespace: $(cat /etc/podinfo/namespace)"
-  exit 2
+  die "$(renewal_failure_message "Could not delete existing Secret '${TLS_CERT_SECRET_NAME}' (that contains the old certificate)")"
 fi
 
 log "Uploading full chain cert as secret '${TLS_CERT_SECRET_NAME}' to K8s"
@@ -292,8 +318,7 @@ kubectl create secret generic "${TLS_CERT_SECRET_NAME}" $(namespace) \
 
 if [ "$?" != "0" ]; then
   log "Error creating new secret ${TLS_CERT_SECRET_NAME}"
-  slack_error "Renewal of TLS certs for ${DOMAINS} failed.  Error uploading certs to k8s secret '${TLS_CERT_SECRET_NAME}'\n\nPod name: $(cat /etc/podinfo/podname)\nPod namespace: $(cat /etc/podinfo/namespace)"
-  exit 2
+  die "$(renewal_failure_message "Error creating k8s secret '${TLS_CERT_SECRET_NAME}'")"
 fi
 
 log "Certificate for ${DOMAINS} updated successfully.  Cert placed in secret '${TLS_CERT_SECRET_NAME}'"
