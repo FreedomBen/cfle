@@ -16,7 +16,7 @@
 #SLACK_USERNAME='Some Username'
 #SLACK_ICON_EMOJI=':scroll:'  # or :lock: or something
 
-set -o nounset  # Uncomment for debugging
+#set -o nounset  # Uncomment for debugging
 
 # Use `help declare` to get more info about declare options
 declare -r NUM_SECS_IN_MONTH=2592000  # month == 30 days, 60 * 60 * 24 * 30
