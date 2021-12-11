@@ -65,7 +65,6 @@ slack_username ()
 
 send_slack_message ()
 {
-  local username="Deploy of ${GITHUB_REPOSITORY} to ${ENV}"
   if [ -n "${SLACK_API_TOKEN}" ]; then
     log "SLACK_API_TOKEN is set.  sending slack message to channel ${1}"
     curl \
