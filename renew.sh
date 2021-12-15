@@ -321,7 +321,7 @@ if [ "$?" != "0" ]; then
 fi
 
 log "Certificate for ${DOMAINS} updated successfully.  Cert placed in secret '${TLS_CERT_SECRET_NAME}'"
-slack_success "Renewal of TLS certs for ${DOMAINS} succeeded.  Cert placed in secret '${TLS_CERT_SECRET_NAME}'"
+slack_success "Renewal of TLS certs for ${DOMAINS} succeeded.  Cert placed in secret '${TLS_CERT_SECRET_NAME}'.  Expires on **$(cert_expire_date)**"
 
 log "openssl check of the full chain cert:"
 openssl x509 -noout -text -in fullchain.pem
