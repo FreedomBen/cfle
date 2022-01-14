@@ -12,6 +12,6 @@ echo 'Skipping tests!'
 exit 0
 
 docker run --rm  \
-  "docker.io/freedomben/malan:${RELEASE_VERSION}" \
+  "docker.io/freedomben/cfle:${RELEASE_VERSION}" \
   mix test
 
