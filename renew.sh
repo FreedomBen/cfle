@@ -34,9 +34,18 @@ num_secs_until_expire ()
 
 die ()
 {
-  exit_code="${1:-1}"
-  echo "[DIE] Exit code '${exit_code}' - $(date): ${2}"
-  slack_error "${2}"
+  local exit_code="${1:-99}"
+  local msg="${2}"
+  if ! [[ $exit_code =~ ^-?[0-9]+$ ]]; then
+    echo "Warning: exit code provided to die() was not an integer.  Defaulting to 98"
+    exit_code=98
+    if [ -z "${2}" ]; then
+      echo "Using arg 1 as message since one was not provided"
+      msg="${1}"
+    fi
+  fi
+  echo "[DIE] Exit code '${exit_code}' - $(date): ${msg}"
+  slack_error "${msg}"
   exit ${exit_code}
 }
 
@@ -83,6 +92,8 @@ slack_success ()
   send_slack_message "${SLACK_CHANNEL_SUCCESS}" ":white_check_mark:  ${1}"
 }
 
+# May want to consider uploading additional logs using files.upload endpoint
+#   https://api.slack.com/methods/files.upload
 slack_error ()
 {
   send_slack_message "${SLACK_CHANNEL_ERROR}" ":x:  ${1}"
@@ -215,13 +226,13 @@ replace_cert ()
 }
 
 if [ -z "$CLOUDFLARE_EMAIL" ]; then
-  die 'CFLE cannot renew Lets Encypt certificate becuase the CLOUDFLARE_EMAIL env var is empty.  Set appropriately and try again'
+  die '3' 'CFLE cannot renew Lets Encypt certificate becuase the CLOUDFLARE_EMAIL env var is empty.  Set appropriately and try again'
 elif [ -z "$CLOUDFLARE_API_TOKEN" ]; then
-  die 'CFLE cannot renew Lets Encypt certificate becuase the CLOUDFLARE_API_TOKEN env var is empty.  Set appropriately and try again'
+  die '4' 'CFLE cannot renew Lets Encypt certificate becuase the CLOUDFLARE_API_TOKEN env var is empty.  Set appropriately and try again'
 elif [ -z "$DOMAINS" ]; then
-  die 'CFLE cannot renew Lets Encypt certificate becuase the DOMAINS env var is empty.  Set appropriately and try again'
+  die '5' 'CFLE cannot renew Lets Encypt certificate becuase the DOMAINS env var is empty.  Set appropriately and try again'
 elif [ -z "$TLS_CERT_SECRET_NAME" ]; then
-  die 'CFLE cannot renew Lets Encypt certificate becuase the TLS_CERT_SECRET_NAME and env vars are empty.  Set appropriately and try again'
+  die '6' 'CFLE cannot renew Lets Encypt certificate becuase the TLS_CERT_SECRET_NAME and env vars are empty.  Set appropriately and try again'
 fi
 
 log "TLS certs will go in secret '${TLS_CERT_SECRET_NAME}' in namespace '$(namespace)'"
@@ -283,7 +294,7 @@ certbot certonly $(test_cert) \
 if [ "$?" != "0" ]; then
   status_code="$?"
   log 'certbot failed to renew certificates'
-  die "$(certbot_failure_message "$status_code")"
+  die '7' "$(certbot_failure_message "$status_code")"
 fi
 
 log 'Lets Encrypt DNS-01 challenge finished.  Readying for upload to k8s'
@@ -304,7 +315,7 @@ delete_secret_if_exists "${TLS_CERT_SECRET_NAME}"
 
 if [ "$?" != "0" ]; then
   log 'Error deleting existing secret'
-  die "$(renewal_failure_message "Could not delete existing Secret '${TLS_CERT_SECRET_NAME}' (that contains the old certificate)")"
+  die '8' "$(renewal_failure_message "Could not delete existing Secret '${TLS_CERT_SECRET_NAME}' (that contains the old certificate)")"
 fi
 
 log "Uploading full chain cert as secret '${TLS_CERT_SECRET_NAME}' to K8s"
@@ -323,7 +334,7 @@ kubectl create secret generic "${TLS_CERT_SECRET_NAME}" $(namespace) \
 
 if [ "$?" != "0" ]; then
   log "Error creating new secret ${TLS_CERT_SECRET_NAME}"
-  die "$(renewal_failure_message "Error creating k8s secret '${TLS_CERT_SECRET_NAME}'")"
+  die '9' "$(renewal_failure_message "Error creating k8s secret '${TLS_CERT_SECRET_NAME}'")"
 fi
 
 log "Certificate for ${DOMAINS} updated successfully.  Cert placed in secret '${TLS_CERT_SECRET_NAME}'"
