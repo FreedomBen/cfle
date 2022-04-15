@@ -16,6 +16,8 @@
 #SLACK_USERNAME='Some Username'
 #SLACK_ICON_EMOJI=':scroll:'  # or :lock: or something
 
+#DIE_DELAY_SECS='28800' # seconds to sleep before exiting on failure. 28800 is 8 hours
+
 #set -o nounset  # Uncomment for debugging
 
 # Use `help declare` to get more info about declare options
@@ -46,6 +48,12 @@ die ()
   fi
   echo "[DIE] Exit code '${exit_code}' - $(date): ${msg}"
   slack_error "${msg}"
+  if [ -n "${DIE_DELAY_SECS}" ]; then
+    echo "DIE_DELAY_SECS is set.  Delaying exit by sleeping for ${DIE_DELAY_SECS} seconds"
+    sleep "${DIE_DELAY_SECS}"
+  else
+    echo "DIE_DELAY_SECS is not set.  To delay exit, set DIE_DELAY_SECS"
+  fi
   exit ${exit_code}
 }
 
@@ -92,7 +100,8 @@ slack_success ()
   send_slack_message "${SLACK_CHANNEL_SUCCESS}" ":white_check_mark:  ${1}"
 }
 
-# May want to consider uploading additional logs using files.upload endpoint
+# May want to consider uploading additional logs like
+# /var/log/letsencrypt/letsencrypt.log using files.upload endpoint
 #   https://api.slack.com/methods/files.upload
 slack_error ()
 {
@@ -300,7 +309,7 @@ fi
 log 'Lets Encrypt DNS-01 challenge finished.  Readying for upload to k8s'
 slack_debug "Lets Encrypt DNS-01 challenge finished.  Readying for upload to k8s in secret '${TLS_CERT_SECRET_NAME}'"
 
-set -e 
+set -e
 
 timestamp="$(date +%Y-%m-%d-%H-%M-%S)"
 outputdir="${timestamp}-tls-certs"
