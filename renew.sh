@@ -125,7 +125,7 @@ slack_info ()
 
 certbot_failure_message ()
 {
-  echo -e "Renewal of TLS cert for ${DOMAINS} failed\nCertbot DNS-03 Challenge failed (exited with status code '${1:-unknown}').  See logs for details\n\nCheck logs with kubectl logs $(cat /etc/podinfo/podname) -n $(cat /etc/podinfo/namespace)"
+  echo -e "Renewal of TLS cert for ${DOMAINS} failed\nCertbot DNS-01 Challenge failed (exited with status code '${1:-unknown}').  See logs for details\n\nCheck logs with kubectl logs $(cat /etc/podinfo/podname) -n $(cat /etc/podinfo/namespace)"
 }
 
 renewal_failure_message ()
