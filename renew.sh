@@ -103,6 +103,11 @@ slack_info ()
   send_slack_message "${SLACK_CHANNEL_INFO}" ":information_source:  ${1}"
 }
 
+certbot_failure_message ()
+{
+  echo -e "Renewal of TLS cert for ${DOMAINS} failed\nCertbot DNS-03 Challenge failed (exited with status code '${1:-unknown}').  See logs for details\n\nCheck logs with kubectl logs $(cat /etc/podinfo/podname) -n $(cat /etc/podinfo/namespace)"
+}
+
 renewal_failure_message ()
 {
   echo -e "Renewal of TLS cert for ${DOMAINS} failed\nCert expires on **$(cert_expire_date)**\n${1}\nCheck logs with kubectl logs $(cat /etc/podinfo/podname) -n $(cat /etc/podinfo/namespace)"
@@ -276,8 +281,9 @@ certbot certonly $(test_cert) \
   --preferred-challenges dns-01
 
 if [ "$?" != "0" ]; then
+  status_code="$?"
   log 'certbot failed to renew certificates'
-  die "$(renewal_failure_message "certbot exited with failure")"
+  die "$(certbot_failure_message "$status_code")"
 fi
 
 log 'Lets Encrypt DNS-01 challenge finished.  Readying for upload to k8s'
