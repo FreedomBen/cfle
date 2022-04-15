@@ -297,6 +297,7 @@ certbot certonly $(test_cert) \
   --eff-email \
   --dns-cloudflare \
   --dns-cloudflare-credentials /root/.secrets/cloudflare.ini \
+  --dns-cloudflare-propagation-seconds 30 \
   --domains "${DOMAINS}" \
   --preferred-challenges dns-01
 
