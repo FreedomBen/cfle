@@ -59,4 +59,5 @@ data:
   SLACK_CHANNEL_SUCCESS: '#infra-error'
   SLACK_USERNAME: "CFLE - Lets Encrypt Certificate Renewer - Prod"
   SLACK_ICON_EMOJI: ':lock:'
+  DIE_DELAY_SECS: '28800' # Wait 8 hours before exiting after failure (for debugging)
 
