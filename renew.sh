@@ -334,12 +334,12 @@ kubectl create secret generic "${TLS_CERT_SECRET_NAME}" $(namespace) \
   --from-literal="tls.key=$(cat privkey.pem)" \
   --from-literal="tls.crt=$(cat cert.pem)" \
   --from-literal="tls.chain=$(cat chain.pem)" \
-  --from-literal="tls.fullchain=$(cat chain.pem)" \
+  --from-literal="tls.fullchain=$(cat fullchain.pem)" \
  \
   --from-literal="TLS_PRIVKEY=$(cat privkey.pem)" \
-  --from-literal="TLS_FULLCHAIN=$(cat fullchain.pem)" \
-  --from-literal="TLS_CHAIN=$(cat chain.pem)" \
   --from-literal="TLS_CERT=$(cat cert.pem)"
+  --from-literal="TLS_CHAIN=$(cat chain.pem)" \
+  --from-literal="TLS_FULLCHAIN=$(cat fullchain.pem)" \
 
 
 if [ "$?" != "0" ]; then

@@ -17,7 +17,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Authenticate to DO Container Registry
+      - name: Authenticate to Container Registry
         env:
           DOCKER_CONFIG: ${{ secrets.DOCKER_CONFIG }}
         run: |
