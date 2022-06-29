@@ -260,7 +260,7 @@ if kubectl get namespace "${namespace}" >/dev/null 2>&1; then
   log "Namespace '${namespace}' exists.  Continuing"
 else
   # Should we create the namespace?  Might not have RBAC capability to create a ns
-  die '10' "Namespace '${namespace}' does NOT exist.  Please create it and try again:  kubectl create namespae ${namespace}"
+  die '10' "Namespace '${namespace}' does NOT exist.  Please create it and try again:  `kubectl create namespace '${namespace}'`"
 fi
 
 if [[ "$FORCE_RENEWAL" =~ [Yy] ]]; then
