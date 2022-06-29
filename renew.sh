@@ -162,10 +162,10 @@ delete_secret_if_exists ()
 
 test_cert ()
 {
-  if [[ $TEST_CERT =~ [Yy] ]]; then
-    echo "--test-cert"
-  else
+  if [ -z "${TEST_CERT}" ] || [[ $TEST_CERT =~ [Nn] ]]; then
     echo ""
+  else
+    echo "--test-cert"
   fi
 }
 
@@ -292,10 +292,10 @@ chmod 0700 /root/.secrets/
 chmod 0400 /root/.secrets/cloudflare.ini
 
 if [ -n "$(test_cert)" ]; then
-  log "We are in test mode because env var TEST_CERT is set to '${TEST_CERT}'.  this certificate will come from the Let's Encrypt sandbox server, meaning it will not be valid from a user's perspective"
-  slack_debug "In test cert mode so the certificate will come from the LE sandbox and will not be valid"
-else
   log "We are NOT in test mode because env var TEST_CERT is not set.  This certificate will come from the real Let's Encrypt server and is subject to rate limiting"
+else
+  log "We ARE in test mode because env var TEST_CERT is set to something besides empty or 'No' ('${TEST_CERT}').  this certificate will come from the Let's Encrypt sandbox server, meaning it will not be valid from a user's perspective"
+  slack_debug "In test cert mode so the certificate will come from the LE sandbox and will not be valid"
 fi
 
 log 'Beginning Lets Encrypt DNS-01 challenge'
