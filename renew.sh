@@ -59,7 +59,7 @@ die ()
 
 log ()
 {
-  echo "[LOG] - $(date): ${1}"
+  echo -e "[LOG] - $(date): ${1}"
 }
 
 slack_icon_emoji ()
@@ -256,6 +256,8 @@ log "TLS certs will go in secret '${TLS_CERT_SECRET_NAME}' in namespace '$(names
 #  - Renew certificate with certbot
 
 log "Checking that target namespace '${K8S_NAMESPACE}' exists"
+log "all namespaces:"
+log "\n\n$(kubectl get namespaces)\n\n"
 if kubectl get namespace "${K8S_NAMESPACE}" >/dev/null 2>&1; then
   log "Namespace '${K8S_NAMESPACE}' exists.  Continuing"
 else
