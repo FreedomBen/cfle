@@ -255,12 +255,12 @@ log "TLS certs will go in secret '${TLS_CERT_SECRET_NAME}' in namespace '$(names
 #  - Renew certificate with certbot
 #  - Renew certificate with certbot
 
-log "Checking that target namespace '${namespace}' exists"
-if kubectl get namespace "${namespace}" >/dev/null 2>&1; then
-  log "Namespace '${namespace}' exists.  Continuing"
+log "Checking that target namespace '${K8S_NAMESPACE}' exists"
+if kubectl get namespace "${K8S_NAMESPACE}" >/dev/null 2>&1; then
+  log "Namespace '${K8S_NAMESPACE}' exists.  Continuing"
 else
   # Should we create the namespace?  Might not have RBAC capability to create a ns
-  die '10' "Namespace '${namespace}' does NOT exist.  Please create it and try again:  `kubectl create namespace '${namespace}'`"
+  die '10' "Namespace '${K8S_NAMESPACE}' does NOT exist.  Please create it and try again:  `kubectl create namespace '${K8S_NAMESPACE}'`"
 fi
 
 if [[ "$FORCE_RENEWAL" =~ [Yy] ]]; then
