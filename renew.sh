@@ -257,6 +257,7 @@ log "TLS certs will go in secret '${TLS_CERT_SECRET_NAME}' in namespace '$(names
 
 log "Checking that target namespace '${K8S_NAMESPACE}' exists"
 log "all namespaces:"
+
 log "\n\n$(kubectl get namespaces)\n\n"
 if kubectl get namespace "${K8S_NAMESPACE}" >/dev/null 2>&1; then
   log "Namespace '${K8S_NAMESPACE}' exists.  Continuing"
@@ -293,6 +294,8 @@ chmod 0400 /root/.secrets/cloudflare.ini
 if [ -n "$(test_cert)" ]; then
   log "We are in test mode because env var TEST_CERT is set to '${TEST_CERT}'.  this certificate will come from the Let's Encrypt sandbox server, meaning it will not be valid from a user's perspective"
   slack_debug "In test cert mode so the certificate will come from the LE sandbox and will not be valid"
+else
+  log "We are NOT in test mode because env var TEST_CERT is not set.  This certificate will come from the real Let's Encrypt server and is subject to rate limiting"
 fi
 
 log 'Beginning Lets Encrypt DNS-01 challenge'
@@ -347,9 +350,9 @@ kubectl create secret generic "${TLS_CERT_SECRET_NAME}" $(namespace) \
   --from-literal="tls.fullchain=$(cat fullchain.pem)" \
  \
   --from-literal="TLS_PRIVKEY=$(cat privkey.pem)" \
-  --from-literal="TLS_CERT=$(cat cert.pem)"
+  --from-literal="TLS_CERT=$(cat cert.pem)" \
   --from-literal="TLS_CHAIN=$(cat chain.pem)" \
-  --from-literal="TLS_FULLCHAIN=$(cat fullchain.pem)" \
+  --from-literal="TLS_FULLCHAIN=$(cat fullchain.pem)"
 
 
 if [ "$?" != "0" ]; then
