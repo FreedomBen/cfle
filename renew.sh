@@ -235,13 +235,13 @@ replace_cert ()
 }
 
 if [ -z "$CLOUDFLARE_EMAIL" ]; then
-  die '3' 'CFLE cannot renew Lets Encypt certificate becuase the CLOUDFLARE_EMAIL env var is empty.  Set appropriately and try again'
+  die '3' 'CFLE cannot renew Lets Encypt certificate because the CLOUDFLARE_EMAIL env var is empty.  Set appropriately and try again'
 elif [ -z "$CLOUDFLARE_API_TOKEN" ]; then
-  die '4' 'CFLE cannot renew Lets Encypt certificate becuase the CLOUDFLARE_API_TOKEN env var is empty.  Set appropriately and try again'
+  die '4' 'CFLE cannot renew Lets Encypt certificate because the CLOUDFLARE_API_TOKEN env var is empty.  Set appropriately and try again'
 elif [ -z "$DOMAINS" ]; then
-  die '5' 'CFLE cannot renew Lets Encypt certificate becuase the DOMAINS env var is empty.  Set appropriately and try again'
+  die '5' 'CFLE cannot renew Lets Encypt certificate because the DOMAINS env var is empty.  Set appropriately and try again'
 elif [ -z "$TLS_CERT_SECRET_NAME" ]; then
-  die '6' 'CFLE cannot renew Lets Encypt certificate becuase the TLS_CERT_SECRET_NAME and env vars are empty.  Set appropriately and try again'
+  die '6' 'CFLE cannot renew Lets Encypt certificate because the TLS_CERT_SECRET_NAME and env vars are empty.  Set appropriately and try again'
 fi
 
 log "TLS certs will go in secret '${TLS_CERT_SECRET_NAME}' in namespace '$(namespace)'"
