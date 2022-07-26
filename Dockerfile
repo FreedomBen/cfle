@@ -16,13 +16,21 @@ RUN groupadd --gid 1000 docker \
  && adduser --uid 1000 --gid 1000 --home ${USER_HOME} docker \
  && usermod -L docker
 
+# Set locale to en_US.UTF-8
+RUN dnf install -y \
+    glibc-langpack-en \
+    glibc-locale-source \
+ && localedef --force --inputfile=en_US --charmap=UTF-8 en_US.UTF-8 \
+ && echo "LANG=en_US.UTF-8" > /etc/locale.conf \
+ && dnf clean all \
+ && rm -rf /var/cache/dnf /var/cache/yum
+
 # Install EPEL, base packages, and app dependencies
 RUN dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm \
  && dnf install -y https://mirrors.rpmfusion.org/free/el/rpmfusion-free-release-8.noarch.rpm \
  && dnf install -y https://mirrors.rpmfusion.org/nonfree/el/rpmfusion-nonfree-release-8.noarch.rpm \
  && dnf install -y epel-release \
  && dnf install -y \
-    glibc-langpack-en \
     dnf-plugins-core \
     tini \
  && dnf config-manager --set-enabled powertools \
