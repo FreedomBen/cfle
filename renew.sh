@@ -130,7 +130,7 @@ certbot_failure_message ()
 
 renewal_failure_message ()
 {
-  echo -e "Renewal of TLS cert for ${DOMAINS} failed\nCert expires on **$(cert_expire_date)**\n${1}\nCheck logs with kubectl logs $(cat /etc/podinfo/podname) -n $(cat /etc/podinfo/namespace)"
+  echo -e "Renewal of TLS cert for ${DOMAINS} failed\nCert expires on **$(cert_expire_date "fullchain.pem")**\n${1}\nCheck logs with kubectl logs $(cat /etc/podinfo/podname) -n $(cat /etc/podinfo/namespace)"
 }
 
 namespace ()
@@ -195,7 +195,7 @@ tls_cert ()
 
 cert_expire_date ()
 {
-  echo "${1}" \
+  cat "${1}" \
     | base64 -d \
     | openssl x509 -enddate -noout \
     | sed -E -e 's/^notAfter=//g'
@@ -361,7 +361,7 @@ if [ "$?" != "0" ]; then
 fi
 
 log "Certificate for ${DOMAINS} updated successfully.  Cert placed in secret '${TLS_CERT_SECRET_NAME}'"
-slack_success "Renewal of TLS certs for ${DOMAINS} succeeded.  Cert placed in secret '${TLS_CERT_SECRET_NAME}'.  Expires on **$(cert_expire_date)**"
+slack_success "Renewal of TLS certs for ${DOMAINS} succeeded.  Cert placed in secret '${TLS_CERT_SECRET_NAME}'.  Expires on **$(cert_expire_date "fullchain.pem")**"
 
 log "openssl check of the full chain cert:"
 openssl x509 -noout -text -in fullchain.pem
