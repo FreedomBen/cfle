@@ -9,7 +9,7 @@ FROM almalinux:8.6
 
 ENV USER_HOME /home/docker
 ENV LANG en_US.UTF-8
-ENV KUBECTL_VER=v1.20.5
+ENV KUBECTL_VER=v1.24.13
 
 # Create non-root user
 RUN groupadd --gid 1000 docker \
