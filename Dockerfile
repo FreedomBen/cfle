@@ -1,4 +1,4 @@
-FROM almalinux:8.6
+FROM almalinux:8.8
 
 #
 # almalinux was used as a base image here instead of the Red Hat UBI image because
@@ -9,7 +9,7 @@ FROM almalinux:8.6
 
 ENV USER_HOME /home/docker
 ENV LANG en_US.UTF-8
-ENV KUBECTL_VER=v1.24.13
+ENV KUBECTL_VER=v1.25.11
 
 # Create non-root user
 RUN groupadd --gid 1000 docker \
