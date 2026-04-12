@@ -60,4 +60,3 @@ data:
   SLACK_USERNAME: "CFLE - Lets Encrypt Certificate Renewer - Staging"
   SLACK_ICON_EMOJI: ':scroll:'
   DIE_DELAY_SECS: '28800' # Wait 8 hours before exiting after failure (for debugging)
-
