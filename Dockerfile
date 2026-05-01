@@ -41,7 +41,6 @@ RUN EL_VER="$(rpm -E '%{rhel}')" \
     jq \
     certbot \
     python3-certbot-dns-cloudflare \
-    python-certbot-dns-cloudflare-doc \
     ruby \
  && dnf clean all \
  && rm -rf /var/cache/dnf /var/cache/yum
