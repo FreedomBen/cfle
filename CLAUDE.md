@@ -10,7 +10,7 @@ There is no application code beyond a single bash script — the "app" is `renew
 
 ## High-level architecture
 
-- **`renew.sh`** — the container entrypoint (via `tini`). Full lifecycle:
+- **`renew.sh`** — the container entrypoint. Full lifecycle:
   1. Validates required env vars (`CLOUDFLARE_EMAIL`, `CLOUDFLARE_API_TOKEN`, `DOMAINS`, `TLS_CERT_SECRET_NAME`).
   2. Resolves target namespace from `K8S_NAMESPACE` or the pod's mounted service-account token.
   3. Checks the existing Secret (if any): if the cert has more than `NUM_DAYS_BEFORE_TO_RENEW` days left (default 30), exits 0 without changes — this makes daily runs safe.

@@ -33,7 +33,6 @@ RUN EL_VER="$(rpm -E '%{rhel}')" \
  && dnf install -y epel-release \
  && dnf install -y \
     dnf-plugins-core \
-    tini \
  && dnf config-manager --set-enabled crb \
  && dnf update -y \
  && dnf install -y \
@@ -65,5 +64,4 @@ WORKDIR /app
 # it all in and run composer install every time
 COPY --chown=docker:docker . /app/
 
-ENTRYPOINT [ "tini", "--" ]
 CMD [ "/app/renew.sh" ]
