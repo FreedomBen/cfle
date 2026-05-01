@@ -1,4 +1,4 @@
-FROM almalinux:8.8
+FROM almalinux:10.1
 
 #
 # almalinux was used as a base image here instead of the Red Hat UBI image because
@@ -26,14 +26,15 @@ RUN dnf install -y \
  && rm -rf /var/cache/dnf /var/cache/yum
 
 # Install EPEL, base packages, and app dependencies
-RUN dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm \
- && dnf install -y https://mirrors.rpmfusion.org/free/el/rpmfusion-free-release-8.noarch.rpm \
- && dnf install -y https://mirrors.rpmfusion.org/nonfree/el/rpmfusion-nonfree-release-8.noarch.rpm \
+RUN EL_VER="$(rpm -E '%{rhel}')" \
+ && dnf install -y "https://dl.fedoraproject.org/pub/epel/epel-release-latest-${EL_VER}.noarch.rpm" \
+ && dnf install -y "https://mirrors.rpmfusion.org/free/el/rpmfusion-free-release-${EL_VER}.noarch.rpm" \
+ && dnf install -y "https://mirrors.rpmfusion.org/nonfree/el/rpmfusion-nonfree-release-${EL_VER}.noarch.rpm" \
  && dnf install -y epel-release \
  && dnf install -y \
     dnf-plugins-core \
     tini \
- && dnf config-manager --set-enabled powertools \
+ && dnf config-manager --set-enabled crb \
  && dnf update -y \
  && dnf install -y \
     openssl \
@@ -42,7 +43,7 @@ RUN dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.n
     certbot \
     python3-certbot-dns-cloudflare \
     python-certbot-dns-cloudflare-doc \
- && dnf module install -y ruby:2.7 \
+    ruby \
  && dnf clean all \
  && rm -rf /var/cache/dnf /var/cache/yum
 
