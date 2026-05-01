@@ -1,2 +1,0 @@
-- Notification to slack/email for renewals
-- Multiple namespaces in `NAMESPACE`
