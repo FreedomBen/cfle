@@ -42,9 +42,14 @@ All configuration is passed via environment variables, typically through a
 | Variable                | Description                                                                                  |
 | ----------------------- | -------------------------------------------------------------------------------------------- |
 | `CLOUDFLARE_EMAIL`      | Email associated with the Cloudflare account; also used as the Let's Encrypt account email. |
-| `CLOUDFLARE_API_TOKEN`  | Cloudflare API token with `Zone:DNS:Edit` permission on the target zone(s).                  |
+| `CLOUDFLARE_API_TOKEN`  | Cloudflare API token with `Zone:DNS:Edit` and `Zone:Zone:Read` on the target zone(s).        |
 | `DOMAINS`               | Comma-separated list of domains to include on the cert (e.g. `example.com,*.example.com`).   |
 | `TLS_CERT_SECRET_NAME`  | Name of the Kubernetes `Secret` to read from and write the renewed cert into.                |
+
+> **Note:** No Cloudflare **Zone ID** is configured anywhere. The certbot Cloudflare plugin
+> resolves the zone for each domain at runtime via the Cloudflare API, which is why the token
+> also needs `Zone:Zone:Read` (not just `Zone:DNS:Edit`). Cloudflare's built-in **Edit zone DNS**
+> token template grants both scopes.
 
 ### Optional
 
