@@ -23,10 +23,10 @@ There is no application code beyond a single bash script — the "app" is `renew
 
 ## Kubernetes layout
 
-- `k8s/{staging,prod}/deploy.yaml` — `CronJob` (named `cfle`) + `ConfigMap` (`cfle-config`). Note: uses `batch/v1beta1` (pre-1.21 API); upgrade to `batch/v1` if targeting newer clusters. The CronJob references `serviceAccountName: cfle-sa`, which does **not** match the SA name defined in `service-account.yaml` (see below) — the example manifests are inconsistent and need reconciling before they will actually run.
+- `k8s/{staging,prod}/deploy.yaml` — `CronJob` (named `cfle`) + `ConfigMap` (`cfle-config`). Note: uses `batch/v1beta1`, an API Kubernetes **removed in 1.25** — a ≥1.25 API server rejects these manifests outright, so switch the CronJob to `batch/v1` for any current cluster. The CronJob references `serviceAccountName: cfle-sa`, which does **not** match the SA name defined in `service-account.yaml` (see below) — the example manifests are inconsistent and need reconciling before they will actually run.
 - `k8s/{staging,prod}/service-account.yaml` — defines `ServiceAccount/tls-cert-renewal-sa` plus a `Role`/`RoleBinding` (`tls-cert-renewal-role` / `tls-cert-renewal-rb`) granting `get,list,create,delete` on `secrets` and `namespaces`, all in namespace `tls-cert-renewal-ns`.
 - `k8s/{staging,prod}/secrets.yaml` and `secrets.yaml.aes` — both files are committed. `.gitignore` has the `secrets.yaml` line commented out, so plaintext is currently *not* ignored — treat the committed `secrets.yaml` files as placeholders, not real secrets, and use the `.aes` files (decrypted out-of-band) for actual values.
-- `scripts/change-version.sh` is intended to bump the image tag, but its `K8S_FILES`/image-tag `sed` loop is commented out. As written, it generates a `YYYYMMDDHHMMSS` timestamp and only rewrites `LATEST_VERSION=` lines via `findref` — and no such lines exist in the tree, so the script is effectively a no-op today. The image tag in `deploy.yaml` (currently `20211004184552`) has to be updated by hand.
+- `scripts/change-version.sh` **does** rewrite the `image:` tag in both `k8s/staging/deploy.yaml` and `k8s/prod/deploy.yaml` — its second `sed` loop (the plain `cfle` variant) is live; only the first `cfle-(.*)` variant loop and the `findref`/`LATEST_VERSION=` loop are no-ops (no such lines exist in the tree). The catch: the tag it writes is a fresh `YYYYMMDDHHMMSS` timestamp generated at run time — **not** `RELEASE_VERSION` and **not** the git-SHA tag `build-release.sh` actually built/pushed — so running it can point the manifest at an image tag that was never published. To pin a specific built image, edit the `image:` tag by hand instead.
 
 ## Common commands
 
@@ -48,7 +48,8 @@ There is no application code beyond a single bash script — the "app" is `renew
 
 ### Bump image version in manifests
 ```
-./scripts/change-version.sh   # currently a no-op (see Kubernetes layout) — edit deploy.yaml's image: tag by hand instead
+./scripts/change-version.sh   # rewrites image: tag in BOTH deploy.yaml files to a fresh timestamp
+                              # (NOT your built/pushed tag — see Kubernetes layout). Edit by hand to pin a specific image.
 ```
 
 ### Manually trigger a cert renewal on-cluster
@@ -60,6 +61,9 @@ There is no application code beyond a single bash script — the "app" is `renew
 ### Inspect the current cert in-cluster
 ```
 ./scripts/inspect-certs.sh   # decodes secrets/tls-cert .data.SSL_CERT through openssl x509 -text
+# Broken as written: renew.sh writes the key TLS_CERT (and tls.crt), never SSL_CERT, and the script
+# hardcodes the secret name `tls-cert`. As-is it returns empty. Use the real key/name instead, e.g.:
+#   kubectl get secret <TLS_CERT_SECRET_NAME> -o jsonpath={.data.TLS_CERT} | base64 -d | openssl x509 -noout -text
 ```
 
 ## CI
@@ -68,8 +72,11 @@ There is no application code beyond a single bash script — the "app" is `renew
 
 ## Gotchas
 
-- The Dockerfile pins `KUBECTL_VER=v1.25.11` but recent commits show this getting bumped — keep it within one minor of the target clusters.
+- The Dockerfile pins `KUBECTL_VER=v1.25.11` (bumped over time, e.g. 1.24.13 → 1.25.11). Keep it within one minor of the target clusters — note this client is itself old now and pairs with the removed-in-1.25 `batch/v1beta1` manifests above.
 - The example manifests have **two name mismatches** worth knowing about before applying them anywhere real: (1) `deploy.yaml` references `serviceAccountName: cfle-sa` while `service-account.yaml` actually creates `tls-cert-renewal-sa`; (2) `run-prod-onetime.sh` targets `cronjob/tls-cert-renewal` while `deploy.yaml` names the CronJob `cfle`. Both need reconciling per-environment.
 - `renew.sh` uses `set -e` / `set +e` deliberately around the certbot invocation and secret replacement. When editing, be careful not to collapse those — the script relies on capturing certbot's exit code and continuing past failures to emit Slack notifications.
 - The Secret is **deleted and recreated** rather than patched, so anything watching the Secret will see it disappear briefly on renewal.
 - `DIE_DELAY_SECS` holds failed pods open for debugging but also means a broken CronJob silently chews up a pod slot for hours. Watch for this when investigating stuck jobs.
+- The pre-flight namespace existence check (`kubectl get namespace "${K8S_NAMESPACE}"`) reads `K8S_NAMESPACE` **directly**, while every Secret operation uses the `namespace()` helper that falls back to the pod's own namespace when `K8S_NAMESPACE` is empty. With the example ConfigMap's `K8S_NAMESPACE: ''` these two disagree about which namespace is "the" namespace — set `K8S_NAMESPACE` explicitly to avoid the check failing or checking the wrong namespace.
+- Slack failure messages call `cat /etc/podinfo/podname` and `/etc/podinfo/namespace` (Downward API), but **no manifest mounts a `podinfo` volume**, so those substitutions come out empty. Add a `podinfo` `downwardAPI` volume + mount if you want the "check logs with kubectl logs ..." hint to be useful.
+- `scripts/deploy-release.sh` and `scripts/run-ci.sh` are generic copies from a Phoenix/Elixir project template: `deploy-release.sh` carries full DB-migration (`migrate.yaml`) and Deployment-rollout machinery, and `run-ci.sh` ends in `mix test`. cfle has **no** `migrate.yaml`, no `Deployment`, and no Elixir — only the deploy.yaml render/diff/apply paths matter; the migration and `mix test` paths are vestigial (`run-ci.sh` also `exit 0`s before ever reaching `mix test`).

@@ -88,10 +88,16 @@ whichever convention they use:
 ## Kubernetes example
 
 See [`k8s/prod/deploy.yaml`](./k8s/prod/deploy.yaml) and
-[`k8s/staging/deploy.yaml`](./k8s/staging/deploy.yaml) for working `CronJob` +
+[`k8s/staging/deploy.yaml`](./k8s/staging/deploy.yaml) for example `CronJob` +
 `ConfigMap` manifests, and [`k8s/prod/service-account.yaml`](./k8s/prod/service-account.yaml)
-for the RBAC the pod needs (get/create/delete on `secrets` in the target
-namespace).
+for the RBAC the pod needs (`get,list,create,delete` on `secrets` and
+`namespaces` in the target namespace).
+
+> **Heads up:** these are illustrative examples, not turn-key manifests. Before
+> applying them: (1) the `CronJob` sets `serviceAccountName: cfle-sa`, but
+> `service-account.yaml` creates `tls-cert-renewal-sa` — reconcile the names;
+> (2) the `CronJob` uses `apiVersion: batch/v1beta1`, which was removed in
+> Kubernetes 1.25 — switch to `batch/v1` for current clusters.
 
 To run the CronJob immediately without waiting for the schedule:
 
@@ -104,6 +110,10 @@ which wraps:
 ```sh
 kubectl create job --from=cronjob/tls-cert-renewal tls-cert-renewal-manual-run-$(date '+%Y-%m-%d-%H-%M-%S')
 ```
+
+> **Note:** the script hardcodes the CronJob name `tls-cert-renewal`, but the
+> example manifests name the CronJob `cfle`. Edit `CRONJOB_NAME` in the script
+> (or the `--from=cronjob/...` argument) to match whatever you actually deployed.
 
 ## Building locally
 
@@ -124,12 +134,22 @@ Override the tag by exporting `RELEASE_VERSION` before running the build script.
 ./scripts/inspect-certs.sh
 ```
 
-decodes the cert stored in the `tls-cert` Secret and pipes it through
+reads the `tls-cert` Secret and pipes the certificate through
 `openssl x509 -noout -text`.
+
+> **Note:** as written the script looks up the key `SSL_CERT` in a Secret named
+> `tls-cert`, but `cfle` stores the certificate under `TLS_CERT` (and `tls.crt`)
+> in the Secret named by `TLS_CERT_SECRET_NAME` — so the script returns nothing
+> unless your setup happens to match. To inspect the real cert:
+>
+> ```sh
+> kubectl get secret <TLS_CERT_SECRET_NAME> -o jsonpath='{.data.TLS_CERT}' \
+>   | base64 -d | openssl x509 -noout -text
+> ```
 
 ## Base image
 
-The container is based on AlmaLinux 8 (chosen over RHEL UBI because some
+The container is based on AlmaLinux 10 (chosen over RHEL UBI because some
 required packages — notably `python3-certbot-dns-cloudflare` — are not in the
 UBI repos). If you have a RHEL subscription, swapping the base image to RHEL
 should be a drop-in replacement for a fully supported configuration.
