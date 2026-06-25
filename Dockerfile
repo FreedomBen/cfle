@@ -46,7 +46,6 @@ RUN EL_VER="$(rpm -E '%{rhel}')" \
     jq \
     certbot \
     python3-certbot-dns-cloudflare \
- && dnf module install -y ruby:2.7 \
  && dnf clean all \
  && rm -rf /var/cache/dnf /var/cache/yum
 
