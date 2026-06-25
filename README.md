@@ -159,10 +159,11 @@ required packages — notably `python3-certbot-dns-cloudflare` — are not in th
 UBI repos). If you have a RHEL subscription, swapping the base image to RHEL
 should be a drop-in replacement for a fully supported configuration.
 
-**Do not bump to EL10.** EL10 ships `python3-cloudflare` 2.19.4, whose API-token
-authentication is broken — `certbot-dns-cloudflare` fails with
-`Error determining zone_id: 6003 Invalid request headers` even with a valid
-token. EL8 ships a `cloudflare` library that works with token auth.
+> **Note:** the `certbot` `dns-cloudflare` plugin authenticates with the API
+> token written to `cloudflare.ini`. Because the `python-cloudflare` library also
+> auto-reads `CLOUDFLARE_*`/`CF_API_*` environment variables, `renew.sh` clears
+> `CLOUDFLARE_EMAIL` (and any key vars) before invoking certbot — otherwise the
+> library errors with `confused info - both key and token defined`.
 
 ## License
 

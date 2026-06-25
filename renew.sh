@@ -300,13 +300,20 @@ fi
 
 log 'Beginning Lets Encrypt DNS-01 challenge'
 
+# python-cloudflare auto-reads CLOUDFLARE_*/CF_API_* env vars; CLOUDFLARE_EMAIL
+# alongside the token makes it error ("confused info - both key and token defined").
+# Keep the email for the LE account, then clear the auth vars so certbot uses only
+# the token from cloudflare.ini.
+le_account_email="${CLOUDFLARE_EMAIL}"
+unset CLOUDFLARE_EMAIL CLOUDFLARE_API_KEY CF_API_EMAIL CF_API_KEY
+
 set +e
 
 certbot certonly $(test_cert) \
   --non-interactive \
   --force-renewal \
   --agree-tos \
-  --email "${CLOUDFLARE_EMAIL}" \
+  --email "${le_account_email}" \
   --eff-email \
   --dns-cloudflare \
   --dns-cloudflare-credentials /root/.secrets/cloudflare.ini \

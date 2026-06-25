@@ -1,11 +1,6 @@
 FROM almalinux:8.10
 
 #
-# Pinned to almalinux 8.x — do NOT bump to EL10. EL10 ships python3-cloudflare 2.19.4,
-# whose API-token auth is broken: certbot-dns-cloudflare fails with
-# "Error determining zone_id: 6003 Invalid request headers" even with a valid token.
-# EL8's cloudflare library works with token auth.
-#
 # almalinux was used as a base image here instead of the Red Hat UBI image because
 # some of the packages needed were not in the UBI repos.  If a user has a RHEL
 # subscription, it should be drop in replacement to switch to a RHEL base for a fully
