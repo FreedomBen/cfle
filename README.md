@@ -154,10 +154,15 @@ reads the `tls-cert` Secret and pipes the certificate through
 
 ## Base image
 
-The container is based on AlmaLinux 10 (chosen over RHEL UBI because some
+The container is based on AlmaLinux 8.8 (chosen over RHEL UBI because some
 required packages — notably `python3-certbot-dns-cloudflare` — are not in the
 UBI repos). If you have a RHEL subscription, swapping the base image to RHEL
 should be a drop-in replacement for a fully supported configuration.
+
+**Do not bump to EL10.** EL10 ships `python3-cloudflare` 2.19.4, whose API-token
+authentication is broken — `certbot-dns-cloudflare` fails with
+`Error determining zone_id: 6003 Invalid request headers` even with a valid
+token. EL8 ships a `cloudflare` library that works with token auth.
 
 ## License
 
