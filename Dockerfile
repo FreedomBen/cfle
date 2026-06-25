@@ -1,4 +1,4 @@
-FROM almalinux:8.8
+FROM almalinux:8.10
 
 #
 # Pinned to almalinux 8.x — do NOT bump to EL10. EL10 ships python3-cloudflare 2.19.4,
