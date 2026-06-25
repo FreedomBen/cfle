@@ -154,7 +154,7 @@ reads the `tls-cert` Secret and pipes the certificate through
 
 ## Base image
 
-The container is based on AlmaLinux 8.8 (chosen over RHEL UBI because some
+The container is based on AlmaLinux 10.2 (chosen over RHEL UBI because some
 required packages — notably `python3-certbot-dns-cloudflare` — are not in the
 UBI repos). If you have a RHEL subscription, swapping the base image to RHEL
 should be a drop-in replacement for a fully supported configuration.

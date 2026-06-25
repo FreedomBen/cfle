@@ -1,4 +1,4 @@
-FROM almalinux:8.10
+FROM almalinux:10.2
 
 #
 # almalinux was used as a base image here instead of the Red Hat UBI image because
@@ -33,7 +33,7 @@ RUN EL_VER="$(rpm -E '%{rhel}')" \
  && dnf install -y epel-release \
  && dnf install -y \
     dnf-plugins-core \
- && dnf config-manager --set-enabled powertools \
+ && dnf config-manager --set-enabled crb \
  && dnf update -y \
  && dnf install -y \
     openssl \
